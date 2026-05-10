@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Κλασματική Απόσταξη Πετρελαίου</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f0f2f5;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 30px auto;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.15);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+h2 {
+  grid-column: span 2;
+  text-align: center;
+}
+
+/* INFO ICON */
+.info-btn {
+  cursor: pointer;
+  font-size: 18px;
+  margin-left: 8px;
+}
+
+/* NOTE */
+.note {
+  grid-column: span 2;
+  font-size: 13px;
+  background: #f7f7f7;
+  border-left: 4px solid #666;
+  padding: 8px 12px;
+}
+
+/* LEFT PANEL */
+.temp {
+  text-align: center;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+.fractions-list {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.fraction {
+  padding: 6px;
+  margin: 4px 0;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.fraction.active {
+  border: 2px solid #333;
+  font-weight: bold;
+}
+
+/* COLUMN */
+.column {
+  position: relative;
+  width: 110px;
+  height: 420px;
+  margin: auto;
+  border: 3px solid #444;
+  border-radius: 20px;
+  background: linear-gradient(to top, #ccc, #fff);
+}
+
+.tray {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 55px;
+  border-bottom: 1px dashed #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+/* ARROWS */
+.tray::after {
+  content: "";
+  position: absolute;
+  right: -40px;
+  top: 50%;
+  width: 40px;
+  height: 6px;
+  background: #777;
+  transform: translateY(-50%);
+}
+
+.tray::before {
+  content: "";
+  position: absolute;
+  right: -48px;
+  top: calc(50% - 6px);
+  border-left: 8px solid #777;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+}
+
+.tray.active {
+  font-weight: bold;
+  border: 2px solid #333;
+}
+
+/* LABELS */
+.label {
+  position: absolute;
+  right: -260px;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1.5px solid #444;
+  background: #eee;
+  display: none;
+  white-space: nowrap;
+  box-shadow: 1px 1px 2px rgba(0,0,0,0.25);
+  filter: saturate(1.1);
+}
+
+/* FLAME */
+.flame {
+  text-align: center;
+  font-size: 40px;
+  margin-top: 10px;
+}
+
+/* OVERLAY */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.overlay-content {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  max-width: 600px;
+  width: 90%;
+  position: relative;
+}
+
+.close-btn {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  border: none;
+  background: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+@media (max-width: 900px) {
+
+  .container {
+    grid-template-columns: 1fr;
+  }
+
+  h2, .note {
+    grid-column: span 1;
+    text-align: center;
+  }
+
+  /* Στήλη απόσταξης πιο κάτω και κεντραρισμένη */
+  .column {
+    margin: 20px auto;
+  }
+
+  /* Ετικέτες να μη βγαίνουν εκτός */
+  .label {
+    right: -180px;
+    font-size: 11px;
+  }
+
+  /* Λίστα κλασμάτων λίγο πιο «σφιχτή» */
+  .fraction {
+    font-size: 13px;
+  }
+}
+@media (max-width: 600px) {
+
+  .label {
+    position: static;
+    display: block;
+    margin-top: 4px;
+  }
+
+  .tray::before,
+  .tray::after {
+    display: none;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>
+  Κλασματική Απόσταξη Πετρελαίου
+  <span class="info-btn" onclick="toggleOverlay()">ℹ️</span>
+</h2>
+
+<div class="note">
+Τα θερμοκρασιακά όρια και τα εύρη C είναι ενδεικτικά και εξαρτώνται από τη σύσταση του πετρελαίου.
+</div>
+
+<!-- LEFT -->
+<div>
+<input id="slider" type="range" min="0" max="600" step="10" value="0"
+       oninput="updateTemp(this.value)" style="width:100%;">
+
+<div class="temp">Θερμοκρασία: <span id="tempValue">0</span> °C</div>
+
+<div id="fractions" class="fractions-list"></div>
+
+<button onclick="resetSimulation()" style="margin-top:10px;">
+Εκκίνηση / Μηδενισμός
+</button>
+</div>
+
+<!-- RIGHT -->
+<div>
+<div class="column" id="column"></div>
+<div class="flame">🔥</div>
+</div>
+
+</div>
+
+<!-- OVERLAY -->
+<div id="infoOverlay" class="overlay" onclick="toggleOverlay()">
+  <div class="overlay-content" onclick="event.stopPropagation()">
+    <button class="close-btn" onclick="toggleOverlay()">✕</button>
+
+    <h3>Πώς λειτουργεί η προσομοίωση</h3>
+    <p>
+      Καθώς αυξάνεται η θερμοκρασία, τα συστατικά του πετρελαίου
+      υγροποιούνται σε διαφορετικά ύψη της στήλης,
+      ανάλογα με το σημείο βρασμού τους.
+    </p>
+    <p>
+      Η κλασματική απόσταξη είναι <b>φυσική διεργασία</b>
+      και όχι χημική αντίδραση.
+    </p>
+  </div>
+</div>
+
+<script>
+const fractions = [
+ { name:"Αέρια (LPG)",min:0,max:40,carbons:"C₁–C₄",use:"Μαγείρεμα / Θέρμανση",color:"#b3e5fc"},
+ { name:"Βενζίνη",min:40,max:180,carbons:"C₅–C₁₀",use:"Καύσιμο αυτοκινήτων",color:"#c8e6c9"},
+ { name:"Κηροζίνη",min:180,max:250,carbons:"C₁₀–C₁₆",use:"Καύσιμο αεροπλάνων",color:"#fff9c4"},
+ { name:"Ντίζελ",min:250,max:350,carbons:"C₁₄–C₂₀",use:"Πετρελαιοκινητήρες",color:"#ffe0b2"},
+ { name:"Λιπαντικά",min:350,max:450,carbons:"C₂₀–C₃₀",use:"Λιπαντικά μηχανών",color:"#ffcdd2"},
+ { name:"Υπόλειμμα",min:450,max:600,carbons:">C₃₀",use:"Άσφαλτος / Μόνωση",color:"#d7ccc8"}
+];
+
+const produced = new Array(fractions.length).fill(false);
+const column = document.getElementById("column");
+
+fractions.forEach((f,i)=>{
+ const tray=document.createElement("div");
+ tray.className="tray";
+ tray.style.bottom=(i*70)+"px";
+ tray.id="tray"+i;
+ tray.textContent=f.name;
+
+ const label=document.createElement("div");
+ label.className="label";
+ label.style.background=f.color;
+ label.textContent=`${f.carbons} | ${f.use}`;
+ tray.appendChild(label);
+
+ column.appendChild(tray);
+});
+
+function updateTemp(temp){
+ document.getElementById("tempValue").textContent=temp;
+ const list=document.getElementById("fractions");
+ list.innerHTML="";
+
+ fractions.forEach((f,i)=>{
+  const div=document.createElement("div");
+  div.className="fraction";
+  div.style.background=f.color;
+
+  const tray=document.getElementById("tray"+i);
+  tray.classList.remove("active");
+
+  if(temp>=f.min){
+    produced[i]=true;
+    tray.querySelector(".label").style.display="block";
+  }
+
+  if(temp>=f.min && temp<f.max){
+    div.classList.add("active");
+    tray.classList.add("active");
+  }
+
+  div.textContent=`${f.name} (${f.min}–${f.max} °C)`;
+  list.appendChild(div);
+ });
+}
+
+function resetSimulation(){
+ document.getElementById("slider").value=0;
+ document.getElementById("tempValue").textContent=0;
+
+ for(let i=0;i<produced.length;i++){
+  produced[i]=false;
+  const tray=document.getElementById("tray"+i);
+  tray.classList.remove("active");
+  tray.querySelector(".label").style.display="none";
+ }
+
+ updateTemp(0);
+}
+
+function toggleOverlay(){
+ const o=document.getElementById("infoOverlay");
+ o.style.display=(o.style.display==="flex")?"none":"flex";
+}
+
+updateTemp(0);
+</script>
+
+</body>
+</html>
